@@ -12,7 +12,9 @@
     "collect": "tsx pipeline/collect.ts",
     "profile:refresh": "tsx pipeline/refresh-profile.ts",
     "db:push": "drizzle-kit push",
-    "hash-password": "tsx scripts/hash-password.ts"
+    "hash-password": "tsx scripts/hash-password.ts",
+    "unlock-login": "tsx scripts/unlock-login.ts",
+    "check-password": "tsx scripts/check-password.ts"
   },
   "dependencies": {
     "@google/genai": "^3.0.0",
