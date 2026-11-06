@@ -147,3 +147,19 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Local Browser Session & Data
+.chrome-session/
+data/seen_jobs.json
+reports/
+.DS_Store
+
+
+# Personal data (resume etc.)
+data/
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.vercel

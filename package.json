@@ -1,0 +1,47 @@
+{
+  "name": "job-matcher-agent",
+  "version": "1.0.0",
+  "description": "채용 공고(원티드, 사람인, 잡코리아)를 크롤링하고 Gemini API를 이용해 이력서 매칭 및 수정 방향을 도출하는 에이전트",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "pipeline": "tsx pipeline/index.ts",
+    "collect": "tsx pipeline/collect.ts",
+    "profile:refresh": "tsx pipeline/refresh-profile.ts",
+    "db:push": "drizzle-kit push",
+    "hash-password": "tsx scripts/hash-password.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^3.0.0",
+    "@neondatabase/serverless": "^1.2.0",
+    "@notionhq/client": "^5.31.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.45.4",
+    "jose": "^6.2.15",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1",
+    "unpdf": "^2.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "playwright": "^1.65.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

@@ -1,0 +1,39 @@
+name: pipeline
+
+on:
+  workflow_dispatch:
+
+# 동시에 두 번 돌지 않도록
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Collect → screen → analyze
+        run: npm run pipeline
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SCREENER_MODEL: ${{ vars.SCREENER_MODEL }}
+          ANALYZER_MODEL: ${{ vars.ANALYZER_MODEL }}
+          COLLECT_SITES: ${{ vars.COLLECT_SITES || 'wanted,saramin,jobkorea' }}
+          MAX_JOBS_PER_SITE: ${{ vars.MAX_JOBS_PER_SITE || '20' }}
+          SCREEN_TOP_K: ${{ vars.SCREEN_TOP_K || '8' }}
+          FINAL_TOP_K: ${{ vars.FINAL_TOP_K || '5' }}
+          HEADLESS: "true"
