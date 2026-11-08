@@ -3,15 +3,10 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { createSessionToken, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth";
 import { db, schema } from "@/lib/db/client";
+import { PasswordConfigError, readPasswordHash } from "@/lib/password";
 
 const MAX_FAILURES = 5;
 const LOCK_MINUTES = 15;
-
-function passwordHash() {
-  const b64 = process.env.AUTH_PASSWORD_HASH_B64;
-  if (!b64) throw new Error("AUTH_PASSWORD_HASH_B64 환경변수가 설정되지 않았습니다.");
-  return Buffer.from(b64, "base64").toString("utf8");
-}
 
 function back(request: NextRequest, error: string) {
   return NextResponse.redirect(new URL(`/login?error=${error}`, request.url), 303);
@@ -19,6 +14,18 @@ function back(request: NextRequest, error: string) {
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  // 해시 설정이 깨져 있으면 "틀린 비밀번호"와 구분해서 알리고, 실패 횟수도 올리지 않는다
+  let hash: string;
+  try {
+    hash = readPasswordHash();
+  } catch (e) {
+    if (e instanceof PasswordConfigError) {
+      console.error(`[login] ${e.message}`);
+      return back(request, "config");
+    }
+    throw e;
+  }
+
   const [attempt] = await db().select().from(schema.loginAttempts).where(eq(schema.loginAttempts.ip, ip));
 
   if (attempt?.lockedUntil && attempt.lockedUntil > new Date()) {
@@ -27,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const form = await request.formData();
   const password = String(form.get("password") ?? "");
-  const ok = password.length > 0 && (await bcrypt.compare(password, passwordHash()));
+  const ok = password.length > 0 && (await bcrypt.compare(password, hash));
 
   if (!ok) {
     const failures = (attempt?.lockedUntil && attempt.lockedUntil <= new Date() ? 0 : (attempt?.failures ?? 0)) + 1;

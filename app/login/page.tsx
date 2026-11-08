@@ -3,6 +3,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 const ERRORS: Record<string, string> = {
   invalid: "비밀번호가 올바르지 않습니다.",
   locked: "로그인 시도가 너무 많습니다. 15분 후 다시 시도하세요.",
+  config: "서버 비밀번호 설정(AUTH_PASSWORD_HASH_B64) 형식이 잘못되었습니다. Vercel 환경변수를 확인하세요.",
 };
 
 export default async function LoginPage({

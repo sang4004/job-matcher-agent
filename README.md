@@ -28,7 +28,7 @@
 2. **로컬 `.env`**: `.env.example` 복사 후 채우기
    ```bash
    npm install
-   npm run hash-password -- '내비밀번호'   # → AUTH_PASSWORD_HASH_B64
+   npm run -s hash-password              # 비밀번호 입력 → 출력된 80자 한 줄이 AUTH_PASSWORD_HASH_B64
    openssl rand -base64 32                # → AUTH_SECRET
    npm run db:push                        # 테이블 생성
    ```
@@ -49,6 +49,8 @@ npm run dev                  # 대시보드 로컬 실행
 npm run pipeline             # 수집+분석 전체 (로컬)
 npm run collect -- jobkorea  # 특정 사이트만 로컬 수집 → DB (Actions에서 막힐 때)
 npm run profile:refresh      # Notion 동기화 + 프로필 갱신 (--force: 전체 다시 받기)
+npm run -s check-password    # 비밀번호가 로컬 .env 해시와 맞는지 확인
+npm run unlock-login         # 로그인 잠금 해제
 ```
 
 잡코리아가 Actions에서 막히면: GitHub Variables에 `COLLECT_SITES=wanted,saramin`을 넣고, 분석 전에 로컬에서 `npm run collect -- jobkorea`를 실행하면 됩니다. 분석기는 최근 `RAW_JOB_WINDOW_DAYS`(기본 7일) 안에 수집된 공고를 어디서 수집했든 함께 봅니다.

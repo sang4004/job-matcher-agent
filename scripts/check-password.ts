@@ -1,20 +1,32 @@
 /**
  * 비밀번호가 로컬 .env의 AUTH_PASSWORD_HASH_B64와 맞는지 확인
- * 사용법: npm run check-password -- '비밀번호'
+ *   npm run -s check-password
  * (Vercel에 넣은 값이 로컬 .env와 같을 때만 의미가 있음)
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import { readPasswordHash } from "../lib/password";
 
-const password = process.argv[2];
-const b64 = process.env.AUTH_PASSWORD_HASH_B64;
-if (!password) {
-  console.error("비밀번호를 인자로 넣어주세요: npm run check-password -- 'password'");
-  process.exit(1);
+async function readLine(question: string): Promise<string> {
+  const { createInterface } = await import("node:readline/promises");
+  const rl = createInterface({ input: process.stdin, output: process.stderr, terminal: true });
+  // 입력값이 화면에 보이지 않게
+  (rl as unknown as { _writeToOutput: (s: string) => void })._writeToOutput = (s: string) => {
+    if (s.startsWith(question)) process.stderr.write(question);
+  };
+  const answer = await rl.question(question);
+  rl.close();
+  process.stderr.write("\n");
+  return answer;
 }
-if (!b64) {
-  console.error("로컬 .env에 AUTH_PASSWORD_HASH_B64가 없습니다.");
-  process.exit(1);
+
+async function main() {
+  const hash = readPasswordHash(); // 형식이 깨졌으면 여기서 이유와 함께 실패
+  const password = process.argv[2] ?? (await readLine("비밀번호: "));
+  console.log(bcrypt.compareSync(password, hash) ? "✅ 일치합니다" : "❌ 일치하지 않습니다");
 }
-const ok = bcrypt.compareSync(password, Buffer.from(b64, "base64").toString("utf8"));
-console.log(ok ? "✅ 일치합니다" : "❌ 일치하지 않습니다");
+
+main().catch((e) => {
+  console.error(`❌ ${e instanceof Error ? e.message : e}`);
+  process.exit(1);
+});
