@@ -1,4 +1,8 @@
-import { Client, isFullBlock, isFullPage } from "@notionhq/client";
+// @notionhq/client는 CJS(getter로 export)라 Node ESM(tsx)에서 named import가 인식되지 않음 → default로 받아 구조분해
+import notionPkg from "@notionhq/client";
+import type { Client } from "@notionhq/client";
+
+const { Client: NotionClient, isFullBlock, isFullPage } = notionPkg;
 import type {
   BlockObjectResponse,
   PageObjectResponse,
@@ -12,7 +16,7 @@ type NotionPage = typeof schema.notionPages.$inferInsert;
 function client() {
   const auth = process.env.NOTION_TOKEN;
   if (!auth) throw new Error("NOTION_TOKEN 환경변수가 설정되지 않았습니다.");
-  return new Client({ auth });
+  return new NotionClient({ auth });
 }
 
 function rt(items: RichTextItemResponse[]): string {

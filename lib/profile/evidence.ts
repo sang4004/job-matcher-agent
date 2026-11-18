@@ -12,7 +12,11 @@ const MIN_BODY = 150;
 const MAX_BODY = 3500;
 
 function cleanHeading(h: string) {
-  return h.replace(/\*\*/g, "").replace(/^[\p{Extended_Pictographic}️⃣\d\s]+/u, "").trim();
+  return h
+    .replace(/\*\*/g, "")
+    // 앞쪽 이모지만 제거: 키캡 번호(1️⃣), 피부톤·ZWJ 조합(👨🏻‍💻) 포함. 일반 숫자("26개 차트")는 보존
+    .replace(/^(?:\s|[0-9#*]\uFE0F?\u20E3|\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D)+/u, "")
+    .trim();
 }
 
 /** Markdown을 제목 단위로 잘라 근거 사례를 만든다 */
