@@ -7,7 +7,7 @@ type Unit = typeof schema.evidenceUnits.$inferInsert;
 
 /** 근거 사례로 쓰기엔 목록/메타 성격인 섹션 */
 const SKIP_HEADINGS =
-  /기술\s*스택|stacks?|주력|구현\s*경험|배포\s*및\s*협업|자격증|career|experiences?|대표\s*화면|side\s*project|projects?$/i;
+  /기술\s*스택|stacks?|주력|구현\s*경험|백엔드\s*[,·및]?\s*DB|배포\s*및\s*협업|자격증|career|experiences?|대표\s*화면|side\s*project|projects?$/i;
 const MIN_BODY = 150;
 const MAX_BODY = 3500;
 
@@ -76,9 +76,12 @@ export async function rebuildEvidence(pageIds: string[]) {
     const tagged = await generateJson({
       model: model("screener"),
       schema: TagSchema,
-      prompt: `다음은 프론트엔드 개발자의 포트폴리오 사례 목록입니다.
+      prompt: `다음은 웹 개발자의 포트폴리오 사례 목록입니다.
 각 사례마다 채용공고 요구사항과 매칭하기 좋은 태그 3~6개를 붙여주세요.
-기술(예: SSE, LangGraph, Next.js, Zustand, 차트), 역량(예: 공통 컴포넌트 설계, 성능 최적화, 오류 모니터링, 협업·설득) 위주로.
+- 프론트엔드 기술 (예: Next.js, SSE, Zustand, 차트, 공통 컴포넌트 설계)
+- 백엔드·데이터 (예: REST API 설계, BFF, Node.js, Prisma, TypeORM, SQL 튜닝, 테이블 설계)
+- 역량 (예: 성능 최적화, 오류 모니터링, 운영·장애 대응, 협업·설득)
+사례 본문에 실제로 나온 기술만 태그로 쓰세요.
 
 ${JSON.stringify(units.map((u) => ({ id: u.id, project: u.project, heading: u.heading, body: u.body.slice(0, 1200) })))}`,
     });

@@ -15,13 +15,16 @@ export function ProfileRefreshButton() {
     const data = (await res.json().catch(() => ({}))) as {
       error?: string;
       totalPages?: number;
+      projectPages?: number;
       changedPages?: number;
       evidenceRebuilt?: number;
     };
     setPending(false);
     setMessage(
       res.ok
-        ? `완료: Notion ${data.totalPages}개 중 ${data.changedPages}개 갱신, 근거 사례 ${data.evidenceRebuilt}개 재생성`
+        ? data.projectPages === 0
+          ? `⚠️ 프로젝트 페이지를 찾지 못했습니다. Notion integration 연결과 NOTION_PROJECTS_DATA_SOURCE_ID를 확인하세요.`
+          : `완료: Notion ${data.totalPages}개(프로젝트 ${data.projectPages}개) 중 ${data.changedPages}개 갱신, 근거 사례 ${data.evidenceRebuilt}개 재생성`
         : `실패: ${data.error ?? res.status}`,
     );
     router.refresh();

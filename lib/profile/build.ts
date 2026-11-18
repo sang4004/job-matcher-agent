@@ -16,12 +16,17 @@ export async function buildProfile() {
   const root = pages.filter((p) => p.kind === "root");
   const projects = pages.filter((p) => p.kind === "project");
   const today = new Date().toISOString().slice(0, 10);
+  const { search } = await getSettings();
 
   const prompt = `오늘 날짜: ${today}
+목표 포지션: ${search.targetRole}
 
 아래 자료로 지원자 프로필을 만들어주세요.
 - [Notion]이 기준 자료입니다. [보조 자료]는 Notion에 없는 내용만 보충하는 데 쓰고, 겹치는 내용은 중복으로 세지 마세요.
 - 자료에 없는 내용을 지어내지 마세요.
+- 목표 포지션 관점에서 관련 경험을 빠짐없이 뽑으세요. 프론트엔드뿐 아니라 API·DB·서버 작업(BFF, CRUD API, SQL 개선, 테이블 설계, 사이드 프로젝트 백엔드 등)도 projects와 skills에 반영하세요.
+- 프로젝트의 role에는 맡은 범위를 적되, 백엔드 작업이 있었다면 함께 적으세요 (예: "프론트엔드 리드 + BFF API 구현").
+- 학습 중인 기술(${search.learningSkills.join(", ") || "없음"})은 자료에 실무 근거가 없으면 coreSkills·otherSkills에 넣지 마세요.
 - totalYears는 정규 경력(재직 기간)만 합산하고, 교육/인턴성 경력은 제외하세요.
 
 [Notion — 메인 페이지]
@@ -51,7 +56,7 @@ ${sources.map((s) => `### ${s.label} (${s.fileName})\n${s.text.slice(0, 20000)}`
 }
 
 export async function refreshProfile(opts: { force?: boolean; skipNotion?: boolean } = {}) {
-  let sync = { changedPageIds: [] as string[], removedPageIds: [] as string[], totalPages: 0 };
+  let sync = { changedPageIds: [] as string[], removedPageIds: [] as string[], totalPages: 0, projectPages: 0 };
   if (!opts.skipNotion && process.env.NOTION_TOKEN) {
     sync = await syncNotion({ force: opts.force });
   }

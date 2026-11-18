@@ -5,10 +5,9 @@ import { cleanPureText} from "./utils";
 /**
  * 원티드 직군/직무 태그 ID
  * 518: 개발 직군 (Job Group)
- * 669: 프론트엔드 개발자 (Duty / Category)
+ * 직무 ID는 설정에서 지정 (wanted.co.kr/wdlist/518/{ID}, 예: 669 프론트엔드)
  */
 const WANTED_JOB_GROUP_ID = 518;
-const WANTED_FRONTEND_CATEGORY_ID = 669;
 
 interface WantedListJobItem {
   id: number;
@@ -62,15 +61,17 @@ export interface CrawlWantedOptions {
   /** 이미 raw_jobs에 있는 공고 ID (상세 재조회 생략) */
   knownIds?: Set<string>;
   maxJobs?: number;
+  /** 직무 태그 ID 목록 (여러 개면 OR 조건) */
+  categoryIds?: number[];
   minYears?: number;
   maxYears?: number;
 }
 
 /**
- * 원티드 프론트엔드 채용 공고 목록 및 상세 API 데이터를 활용하여
- * 주요업무, 자격요건, 우대사항 순수 텍스트만 20개(기본값) 추출합니다.
+ * 원티드 채용 공고 목록 및 상세 API 데이터를 활용하여
+ * 주요업무, 자격요건, 우대사항 순수 텍스트만 추출합니다.
  */
-export async function crawlWantedFrontendJobs(
+export async function crawlWantedJobs(
   context: BrowserContext,
   options: CrawlWantedOptions = {}
 ): Promise<JobPost[]> {
@@ -81,6 +82,7 @@ export async function crawlWantedFrontendJobs(
   const maxYears =
     options.maxYears ?? Number(process.env.WANTED_MAX_YEARS || 10);
 
+  const categoryIds = options.categoryIds?.length ? options.categoryIds : [669];
   const seenIds = options.knownIds ?? new Set<string>();
   const collectedJobs: JobPost[] = [];
 
@@ -88,11 +90,11 @@ export async function crawlWantedFrontendJobs(
 
   try {
     console.log(
-      `🌐 [Wanted] 원티드 프론트엔드 채용 공고 수집 시작 (목표: ${maxJobs}개)...`
+      `🌐 [Wanted] 원티드 직무 ${categoryIds.join(", ")} 채용 공고 수집 시작 (목표: ${maxJobs}개)...`
     );
 
     await page.goto(
-      `https://www.wanted.co.kr/wdlist/${WANTED_JOB_GROUP_ID}/${WANTED_FRONTEND_CATEGORY_ID}`,
+      `https://www.wanted.co.kr/wdlist/${WANTED_JOB_GROUP_ID}/${categoryIds[0]}`,
       { waitUntil: "domcontentloaded", timeout: 30000 }
     );
 
@@ -104,10 +106,9 @@ export async function crawlWantedFrontendJobs(
         "https://www.wanted.co.kr/api/chaos/navigation/v1/results"
       );
       listApiUrl.searchParams.set("job_group_id", String(WANTED_JOB_GROUP_ID));
-      listApiUrl.searchParams.append(
-        "tag_type_ids",
-        String(WANTED_FRONTEND_CATEGORY_ID)
-      );
+      for (const id of categoryIds) {
+        listApiUrl.searchParams.append("tag_type_ids", String(id));
+      }
       listApiUrl.searchParams.set("country", "kr");
       listApiUrl.searchParams.set("job_sort", "job.latest_order");
       listApiUrl.searchParams.append("years", String(minYears));

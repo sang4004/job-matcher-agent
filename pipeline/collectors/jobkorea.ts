@@ -23,16 +23,16 @@ interface JobkoreaListItem {
 }
 
 /**
- * 잡코리아(JobKorea) 프론트엔드 채용 공고 목록 및 상세 본문 크롤러 (기본 20개)
+ * 잡코리아(JobKorea) 채용 공고 목록 및 상세 본문 크롤러 (기본 20개)
  */
-export async function crawlJobkoreaFrontendJobs(
+export async function crawlJobkoreaJobs(
   context: BrowserContext,
   options: CrawlJobkoreaOptions = {}
 ): Promise<JobPost[]> {
   const maxJobs =
     options.maxJobs ?? Number(process.env.MAX_JOBS_PER_SITE || 20);
   const keyword =
-    options.keyword ?? "프론트엔드";
+    options.keyword ?? "풀스택";
 
   const seenIds = options.knownIds ?? new Set<string>();
   const collectedJobs: JobPost[] = [];

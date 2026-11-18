@@ -22,16 +22,16 @@ interface SaraminListItem {
 }
 
 /**
- * 사람인(Saramin) 프론트엔드 채용 공고 목록 및 상세 본문 크롤러 (기본 20개)
+ * 사람인(Saramin) 채용 공고 목록 및 상세 본문 크롤러 (기본 20개)
  */
-export async function crawlSaraminFrontendJobs(
+export async function crawlSaraminJobs(
   context: BrowserContext,
   options: CrawlSaraminOptions = {}
 ): Promise<JobPost[]> {
   const maxJobs =
     options.maxJobs ?? Number(process.env.MAX_JOBS_PER_SITE || 20);
   const keyword =
-    options.keyword ?? "프론트엔드";
+    options.keyword ?? "풀스택";
 
   const seenIds = options.knownIds ?? new Set<string>();
   const collectedJobs: JobPost[] = [];
@@ -161,7 +161,7 @@ export async function crawlSaraminFrontendJobs(
           experience: item.experience,
           mainTasks:
             sections.mainTasks ||
-            `${item.title} (${item.jobSectorTags || "프론트엔드 개발"})`,
+            `${item.title} (${item.jobSectorTags || "개발"})`,
           requirements:
             sections.requirements ||
             item.experience ||

@@ -32,13 +32,14 @@
    openssl rand -base64 32                # → AUTH_SECRET
    npm run db:push                        # 테이블 생성
    ```
-3. **Notion**: https://www.notion.so/profile/integrations 에서 internal integration 생성 → 포트폴리오 최상위 페이지 `···` → 연결 → integration 추가
+3. **Notion**: https://www.notion.so/profile/integrations 에서 internal integration 생성(Read content만) → 포트폴리오 최상위 페이지 `···` → 연결 → integration 추가
+   - 프로젝트 DB가 다른 페이지의 원본을 보여주는 **링크된 보기**라면, 원본 DB가 있는 페이지에도 연결하고 `NOTION_PROJECTS_DATA_SOURCE_ID`를 설정
 4. **프로필 만들기**: `npm run profile:refresh` (또는 대시보드 설정 → 프로필 갱신)
 5. **GitHub**: Settings → Secrets and variables → Actions
    - Secrets: `DATABASE_URL`, `GEMINI_API_KEY`
    - Variables: `SCREENER_MODEL`, `ANALYZER_MODEL` (선택: `COLLECT_SITES`, `MAX_JOBS_PER_SITE`)
    - Billing에서 지출 한도 $0 확인
-6. **Vercel 환경변수**: `DATABASE_URL`, `GEMINI_API_KEY`, `SCREENER_MODEL`, `ANALYZER_MODEL`, `NOTION_TOKEN`, `NOTION_ROOT_PAGE_ID`, `AUTH_PASSWORD_HASH_B64`, `AUTH_SECRET`, `GH_DISPATCH_TOKEN`, `GH_REPO`
+6. **Vercel 환경변수**: `DATABASE_URL`, `GEMINI_API_KEY`, `SCREENER_MODEL`, `ANALYZER_MODEL`, `NOTION_TOKEN`, `NOTION_ROOT_PAGE_ID`, `NOTION_PROJECTS_DATA_SOURCE_ID`, `AUTH_PASSWORD_HASH_B64`, `AUTH_SECRET`, `GH_DISPATCH_TOKEN`, `GH_REPO`
    - `GH_DISPATCH_TOKEN`: Fine-grained PAT, 이 레포만, **Actions: Read and write**
 7. Google AI Studio에서 월 지출 한도 설정 권장
 

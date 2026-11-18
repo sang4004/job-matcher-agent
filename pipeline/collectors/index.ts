@@ -2,9 +2,9 @@ import { gte } from "drizzle-orm";
 import { db, schema } from "../../lib/db/client";
 import type { RawJob, SearchSettings, Site } from "../../lib/types";
 import { launchPersistentBrowser } from "./browser";
-import { crawlJobkoreaFrontendJobs } from "./jobkorea";
-import { crawlSaraminFrontendJobs } from "./saramin";
-import { crawlWantedFrontendJobs } from "./wanted";
+import { crawlJobkoreaJobs } from "./jobkorea";
+import { crawlSaraminJobs } from "./saramin";
+import { crawlWantedJobs } from "./wanted";
 
 export function parseSites(value: string | undefined): Site[] {
   const all: Site[] = ["wanted", "saramin", "jobkorea"];
@@ -45,17 +45,30 @@ export async function collect(sites: Site[], search: SearchSettings, windowDays:
   try {
     for (const site of sites) {
       try {
-        const opts = { maxJobs, keyword: search.searchKeyword, knownIds };
-        const jobs =
-          site === "wanted"
-            ? await crawlWantedFrontendJobs(context, {
-                ...opts,
-                minYears: search.minYears ?? 0,
-                maxYears: search.maxYears ?? 10,
-              })
-            : site === "saramin"
-              ? await crawlSaraminFrontendJobs(context, opts)
-              : await crawlJobkoreaFrontendJobs(context, opts);
+        let jobs: RawJob[];
+        if (site === "wanted") {
+          jobs = await crawlWantedJobs(context, {
+            maxJobs,
+            knownIds,
+            categoryIds: search.wantedCategoryIds,
+            minYears: search.minYears ?? 0,
+            maxYears: search.maxYears ?? 10,
+          });
+        } else {
+          // 키워드마다 몫을 나눠 수집. knownIds를 공유하므로 키워드 간 중복 공고는 건너뜀
+          const crawl = site === "saramin" ? crawlSaraminJobs : crawlJobkoreaJobs;
+          const quota = Math.max(1, Math.ceil(maxJobs / search.keywords.length));
+          jobs = [];
+          for (const keyword of search.keywords) {
+            if (jobs.length >= maxJobs) break;
+            const batch = await crawl(context, {
+              keyword,
+              knownIds,
+              maxJobs: Math.min(quota, maxJobs - jobs.length),
+            });
+            jobs.push(...batch);
+          }
+        }
         await upsertRawJobs(jobs);
         collected[site] = jobs.length;
         if (jobs.length === 0) errors[site] = "신규 공고 0건 (차단 또는 셀렉터 변경 가능성)";

@@ -6,17 +6,27 @@ import { db, getSettings, schema } from "@/lib/db/client";
 import { splitList } from "@/lib/filters";
 import { extractFileText } from "@/lib/profile/sources";
 import { requireAuth } from "@/lib/session";
-import { SearchSettingsSchema } from "@/lib/types";
+import { DEFAULT_KEYWORDS, DEFAULT_TARGET_ROLE, SearchSettingsSchema } from "@/lib/types";
 
 const toYears = (v: FormDataEntryValue | null) => {
   const s = String(v ?? "").trim();
   return s === "" ? null : Number(s);
 };
 
+const nonEmpty = <T,>(list: T[], fallback: T[]) => (list.length > 0 ? list : fallback);
+
 export async function saveSearchSettings(form: FormData) {
   await requireAuth();
   const search = SearchSettingsSchema.parse({
-    searchKeyword: String(form.get("searchKeyword") ?? "").trim() || "프론트엔드",
+    keywords: nonEmpty(splitList(String(form.get("keywords") ?? "")), DEFAULT_KEYWORDS),
+    wantedCategoryIds: nonEmpty(
+      splitList(String(form.get("wantedCategoryIds") ?? ""))
+        .map(Number)
+        .filter((n) => Number.isInteger(n) && n > 0),
+      [669],
+    ),
+    targetRole: String(form.get("targetRole") ?? "").trim() || DEFAULT_TARGET_ROLE,
+    learningSkills: splitList(String(form.get("learningSkills") ?? "")),
     excludeCompanies: splitList(String(form.get("excludeCompanies") ?? "")),
     excludeKeywords: splitList(String(form.get("excludeKeywords") ?? "")),
     minYears: toYears(form.get("minYears")),

@@ -14,9 +14,10 @@ type Rec = {
 const STATUS_STYLE: Record<Analysis["requirementMatches"][number]["status"], string> = {
   strong: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
   partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  learning: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
   gap: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300",
 };
-const STATUS_LABEL = { strong: "충족", partial: "부분", gap: "부족" } as const;
+const STATUS_LABEL = { strong: "충족", partial: "부분", learning: "학습 중", gap: "부족" } as const;
 
 function List({ title, items, tone }: { title: string; items: string[]; tone?: string }) {
   if (items.length === 0) return null;

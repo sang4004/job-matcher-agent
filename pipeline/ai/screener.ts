@@ -25,7 +25,7 @@ export async function screenJobs(
   const result = await generateJson({
     model: model("screener"),
     schema: ScreeningSchema,
-    system: "당신은 프론트엔드 채용 시장을 잘 아는 테크 리크루터입니다. 근거 없이 점수를 부풀리지 마세요.",
+    system: `당신은 한국 개발자 채용 시장을 잘 아는 테크 리크루터입니다. 지원자의 목표 포지션은 "${search.targetRole}"입니다. 근거 없이 점수를 부풀리지 마세요.`,
     prompt: `[지원자 요약]
 ${JSON.stringify({
   summary: profile.summary,
@@ -38,6 +38,9 @@ ${JSON.stringify({
 [지원자 선호/메모]
 ${search.preferenceNote || "(없음)"}
 
+[학습 중인 기술 — 실무 경험 아님]
+${search.learningSkills.join(", ") || "(없음)"}
+
 [근거 사례 목록 — id, 프로젝트, 제목, 태그]
 ${evidence.map((e) => `${e.id} | ${e.project} | ${e.heading} | ${e.tags.join(", ")}`).join("\n")}
 
@@ -45,7 +48,9 @@ ${evidence.map((e) => `${e.id} | ${e.project} | ${e.heading} | ${e.tags.join(", 
 ${JSON.stringify(condensed)}
 
 작업:
-1. 지원자와 가장 잘 맞는 공고를 최대 ${topK}개 고르세요. 기술 스택, 연차 적합성, 업무/도메인 연결성, 선호를 함께 봅니다.
+1. 목표 포지션에 맞고 지원자와 가장 잘 맞는 공고를 최대 ${topK}개 고르세요. 기술 스택, 연차 적합성, 업무/도메인 연결성, 선호를 함께 봅니다.
+   - 프론트엔드와 백엔드(API·DB)를 함께 맡는 공고를 우선합니다. 프론트 전용 공고라도 API 개발 비중이 있으면 포함할 수 있습니다.
+   - 학습 중인 기술이 "필수"인 공고(예: Java/Spring 필수 백엔드)는 크게 감점하고, "우대"인 경우는 소폭만 감점하세요.
 2. 각 후보에 0~100점, 한두 문장 사유, 그리고 이 공고의 요구사항을 뒷받침할 근거 사례 id를 최대 5개 붙이세요.
 3. jobId는 공고 목록의 id를 그대로 쓰세요.`,
   });

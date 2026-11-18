@@ -29,9 +29,24 @@ export default async function SettingsPage() {
         <section className="card">
           <h2 className="mb-4 font-semibold">검색 · 제외 조건</h2>
           <form action={saveSearchSettings} className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="label">목표 포지션 (AI 판단 기준)</label>
+              <input name="targetRole" defaultValue={s.targetRole} className="input" />
+            </div>
             <div>
-              <label className="label">검색 키워드 (사람인·잡코리아)</label>
-              <input name="searchKeyword" defaultValue={s.searchKeyword} className="input" />
+              <label className="label">검색 키워드 · 사람인/잡코리아 (줄바꿈/쉼표 구분)</label>
+              <textarea name="keywords" rows={4} defaultValue={s.keywords.join("\n")} className="input" />
+            </div>
+            <div>
+              <label className="label">원티드 직무 ID (쉼표 구분)</label>
+              <input name="wantedCategoryIds" defaultValue={s.wantedCategoryIds.join(", ")} className="input" />
+              <p className="mt-1 text-xs text-neutral-500">
+                원티드에서 직무를 고르면 주소가 wanted.co.kr/wdlist/518/<b>숫자</b>로 바뀌어요. 그 숫자를 넣으세요. (669 = 프론트엔드)
+              </p>
+            </div>
+            <div>
+              <label className="label">학습 중인 기술 (실무 근거로 쓰지 않음)</label>
+              <input name="learningSkills" defaultValue={s.learningSkills.join(", ")} placeholder="Java, Spring" className="input" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>

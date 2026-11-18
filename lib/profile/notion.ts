@@ -148,22 +148,32 @@ async function blocksToMarkdown(
   return lines.filter((l) => l !== "").join("\n");
 }
 
-async function queryDatabaseRows(notion: Client, databaseId: string): Promise<PageObjectResponse[]> {
-  const database = await notion.databases.retrieve({ database_id: databaseId });
-  const sources = "data_sources" in database ? database.data_sources : [];
-  const rows: PageObjectResponse[] = [];
-  for (const source of sources) {
-    let cursor: string | undefined;
-    do {
-      const res = await notion.dataSources.query({
-        data_source_id: source.id,
-        start_cursor: cursor,
-        page_size: 100,
-      });
-      rows.push(...res.results.filter((r): r is PageObjectResponse => r.object === "page" && isFullPage(r)));
-      cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
-    } while (cursor);
+/** DB 블록 → 데이터 소스 ID. 링크된 보기(linked view)는 API가 거부할 수 있어 실패해도 넘어간다 */
+async function dataSourceIdsOf(notion: Client, databaseId: string): Promise<string[]> {
+  try {
+    const database = await notion.databases.retrieve({ database_id: databaseId });
+    return "data_sources" in database ? database.data_sources.map((s) => s.id) : [];
+  } catch (e) {
+    console.warn(
+      `⚠️ [Notion] DB ${databaseId}를 읽지 못했습니다 (링크된 보기이거나 integration 미연결). ` +
+        `NOTION_PROJECTS_DATA_SOURCE_ID로 원본 데이터 소스를 지정하세요. (${e instanceof Error ? e.message : e})`,
+    );
+    return [];
   }
+}
+
+async function queryDataSourceRows(notion: Client, dataSourceId: string): Promise<PageObjectResponse[]> {
+  const rows: PageObjectResponse[] = [];
+  let cursor: string | undefined;
+  do {
+    const res = await notion.dataSources.query({
+      data_source_id: dataSourceId,
+      start_cursor: cursor,
+      page_size: 100,
+    });
+    rows.push(...res.results.filter((r): r is PageObjectResponse => r.object === "page" && isFullPage(r)));
+    cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
+  } while (cursor);
   return rows;
 }
 
@@ -204,8 +214,22 @@ export async function syncNotion(opts: { force?: boolean } = {}) {
   }
 
   // 2) 프로젝트 DB 행들
+  //    루트 안의 DB 블록 + 직접 지정한 원본 데이터 소스(링크된 보기 대응)를 합쳐 중복 없이 조회
+  const dataSourceIds = new Set(
+    (process.env.NOTION_PROJECTS_DATA_SOURCE_ID ?? "")
+      .split(",")
+      .map((s) => s.trim().replace(/^collection:\/\//, ""))
+      .filter(Boolean),
+  );
   for (const dbId of databases) {
-    for (const row of await queryDatabaseRows(notion, dbId)) {
+    for (const id of await dataSourceIdsOf(notion, dbId)) dataSourceIds.add(id);
+  }
+
+  const seenRows = new Set<string>();
+  for (const dsId of dataSourceIds) {
+    for (const row of await queryDataSourceRows(notion, dsId)) {
+      if (seenRows.has(row.id)) continue;
+      seenRows.add(row.id);
       keepIds.push(row.id);
       if (!isStale(row.id, row.last_edited_time)) continue;
       const markdown = await blocksToMarkdown(notion, row.id, []);
@@ -219,6 +243,13 @@ export async function syncNotion(opts: { force?: boolean } = {}) {
         markdown,
       });
     }
+  }
+
+  if (seenRows.size === 0) {
+    console.warn(
+      "⚠️ [Notion] 프로젝트 페이지를 하나도 찾지 못했습니다. 프로젝트 DB가 링크된 보기라면 " +
+        "원본 DB가 있는 페이지에도 integration을 연결하고 NOTION_PROJECTS_DATA_SOURCE_ID를 설정하세요.",
+    );
   }
 
   // 3) 저장
@@ -241,5 +272,6 @@ export async function syncNotion(opts: { force?: boolean } = {}) {
     changedPageIds: changed.map((p) => p.pageId),
     removedPageIds: removed,
     totalPages: keepIds.length,
+    projectPages: seenRows.size,
   };
 }

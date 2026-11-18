@@ -25,8 +25,18 @@ export const RawJobSchema = z.object({
 export type RawJob = z.infer<typeof RawJobSchema>;
 
 /** 대시보드에서 편집하는 검색/제외 조건 */
+export const DEFAULT_KEYWORDS = ["풀스택", "웹 개발자", "Node.js", "NestJS"];
+export const DEFAULT_TARGET_ROLE = "TypeScript 풀스택 (프론트엔드 강점, Node.js/NestJS 백엔드)";
+
 export const SearchSettingsSchema = z.object({
-  searchKeyword: z.string().min(1).default("프론트엔드"),
+  /** 사람인·잡코리아 검색 키워드 (여러 개) */
+  keywords: z.array(z.string()).min(1).default(DEFAULT_KEYWORDS),
+  /** 원티드 직무 ID (wanted.co.kr/wdlist/518/{ID}) — 669: 프론트엔드 */
+  wantedCategoryIds: z.array(z.number().int().positive()).min(1).default([669]),
+  /** AI 판단 기준이 되는 목표 포지션 */
+  targetRole: z.string().min(1).default(DEFAULT_TARGET_ROLE),
+  /** 학습 중인 기술 — 실무 근거로 쓰지 않음 */
+  learningSkills: z.array(z.string()).default([]),
   excludeCompanies: z.array(z.string()).default([]),
   excludeKeywords: z.array(z.string()).default([]),
   minYears: z.number().int().min(0).nullable().default(null),
@@ -80,7 +90,9 @@ export const AnalysisSchema = z.object({
   requirementMatches: z.array(
     z.object({
       requirement: z.string().describe("공고의 요구/우대 사항"),
-      status: z.enum(["strong", "partial", "gap"]),
+      status: z
+        .enum(["strong", "partial", "learning", "gap"])
+        .describe("strong=실무 근거 충분, partial=관련 실무 있으나 얕음, learning=학습 중인 기술(실무 근거 아님), gap=근거 없음"),
       evidence: z.string().describe("매칭되는 사례 (프로젝트명 + 사례 제목). gap이면 보완 방법"),
     }),
   ),

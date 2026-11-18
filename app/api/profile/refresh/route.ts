@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       totalPages: r.totalPages,
+      projectPages: r.projectPages,
       changedPages: r.changedPageIds.length,
       evidenceRebuilt: r.evidenceRebuilt,
     });
